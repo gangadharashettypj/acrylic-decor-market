@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Card, 
   CardMedia, 
@@ -8,10 +8,55 @@ import {
   CardActions, 
   Button, 
   Rating, 
-  Box 
+  Box,
+  Snackbar,
+  Alert
 } from '@mui/material';
+import { supabase, addToCart } from '../integrations/supabase/client';
+import { useAuth } from '../contexts/AuthContext';
 
 const ProductCard = ({ product }) => {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
+
+  const handleAddToCart = async () => {
+    if (!user) {
+      setNotification({
+        open: true,
+        message: 'Please sign in to add items to your cart',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await addToCart(user.id, product.id);
+      
+      if (error) throw error;
+      
+      setNotification({
+        open: true,
+        message: 'Product added to cart successfully!',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      setNotification({
+        open: true,
+        message: 'Failed to add product to cart',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification(prev => ({ ...prev, open: false }));
+  };
+
   return (
     <Card sx={{ maxWidth: 345, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <CardMedia
@@ -39,8 +84,30 @@ const ProductCard = ({ product }) => {
         </Typography>
       </CardContent>
       <CardActions>
-        <Button size="small" variant="outlined" fullWidth>Add to Cart</Button>
+        <Button 
+          size="small" 
+          variant="outlined" 
+          fullWidth
+          disabled={loading}
+          onClick={handleAddToCart}
+        >
+          {loading ? 'Adding...' : 'Add to Cart'}
+        </Button>
       </CardActions>
+      <Snackbar 
+        open={notification.open} 
+        autoHideDuration={6000} 
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseNotification} 
+          severity={notification.severity} 
+          sx={{ width: '100%' }}
+        >
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 };
