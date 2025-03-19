@@ -39,18 +39,42 @@ const Navbar = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const menuItems = ['Lighting', 'Wall Decor', 'Table Decor', 'Sculptures'];
+  const menuItems = [
+    { name: 'Lighting', path: '/lighting' },
+    { name: 'Wall Decor', path: '/wall-decor' },
+    { name: 'Table Decor', path: '/table-decor' },
+    { name: 'Sculptures', path: '/sculptures' }
+  ];
 
   const drawer = (
     <Box onClick={handleDrawerToggle} sx={{ textAlign: 'center' }}>
-      <Typography variant="h6" sx={{ my: 2 }}>
+      <Typography 
+        variant="h6" 
+        component={Link} 
+        to="/" 
+        sx={{ 
+          my: 2, 
+          color: 'inherit', 
+          textDecoration: 'none',
+          display: 'block'
+        }}
+      >
         LUMINA
       </Typography>
       <Divider />
       <List>
         {menuItems.map((item) => (
-          <ListItem key={item} component={Link} to="/" sx={{ textAlign: 'center', color: 'inherit', textDecoration: 'none' }}>
-            <ListItemText primary={item} />
+          <ListItem 
+            key={item.name} 
+            component={Link} 
+            to={item.path} 
+            sx={{ 
+              textAlign: 'center', 
+              color: 'inherit', 
+              textDecoration: 'none' 
+            }}
+          >
+            <ListItemText primary={item.name} />
           </ListItem>
         ))}
       </List>
@@ -95,12 +119,12 @@ const Navbar = () => {
             <Box sx={{ flexGrow: 1, display: { xs: 'none', sm: 'flex' }, justifyContent: 'center' }}>
               {menuItems.map((item) => (
                 <Button
-                  key={item}
+                  key={item.name}
                   component={Link}
-                  to="/"
+                  to={item.path}
                   sx={{ my: 2, color: 'text.primary', display: 'block', mx: 1 }}
                 >
-                  {item}
+                  {item.name}
                 </Button>
               ))}
             </Box>
