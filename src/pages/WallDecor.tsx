@@ -1,68 +1,36 @@
 
-import React from 'react';
-import { Box, Container, Typography, Grid, Breadcrumbs, Link } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Typography, Grid, Breadcrumbs, Link, CircularProgress } from '@mui/material';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
+import { getProducts } from '../integrations/supabase/client';
 
 const WallDecor = () => {
-  // Sample product data for wall decor category
-  const wallDecorProducts = [
-    {
-      id: 1,
-      name: 'Geometric Wall Art Panels',
-      price: 129.99,
-      image: 'https://images.unsplash.com/photo-1596162954151-cdcb4c0f70a8?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Wall Art',
-      rating: 4.7,
-      reviewCount: 38
-    },
-    {
-      id: 2,
-      name: 'Acrylic Floating Shelf',
-      price: 59.99,
-      image: 'https://images.unsplash.com/photo-1532372320572-cda25653a694?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Shelf',
-      rating: 4.4,
-      reviewCount: 26
-    },
-    {
-      id: 3,
-      name: 'LED Backlit Wall Panel',
-      price: 179.99,
-      image: 'https://images.unsplash.com/photo-1534349762230-e0cadf78f5da?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'LED Panel',
-      rating: 4.8,
-      reviewCount: 43
-    },
-    {
-      id: 4,
-      name: 'Decorative Mirror Set',
-      price: 149.99,
-      image: 'https://images.unsplash.com/photo-1616046229478-9901c5536a45?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Mirror',
-      rating: 4.6,
-      reviewCount: 31
-    },
-    {
-      id: 5,
-      name: 'Abstract Wall Sculpture',
-      price: 189.99,
-      image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Sculpture',
-      rating: 4.9,
-      reviewCount: 47
-    },
-    {
-      id: 6,
-      name: 'Modular Wall Panels',
-      price: 99.99,
-      image: 'https://images.unsplash.com/photo-1594125674956-61a9b49c8ecc?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Wall Panel',
-      rating: 4.5,
-      reviewCount: 32
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await getProducts('Wall Decor');
+        
+        if (error) {
+          throw error;
+        }
+        
+        setProducts(data || []);
+      } catch (err) {
+        console.error('Error fetching wall decor products:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <Box>
@@ -84,13 +52,27 @@ const WallDecor = () => {
           From geometric art panels to decorative shelves, our designs add character and style to any space.
         </Typography>
         
-        <Grid container spacing={4}>
-          {wallDecorProducts.map((product) => (
-            <Grid item key={product.id} xs={12} sm={6} md={4}>
-              <ProductCard product={product} />
-            </Grid>
-          ))}
-        </Grid>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Typography color="error" align="center" sx={{ py: 4 }}>
+            Error loading products: {error}
+          </Typography>
+        ) : products.length === 0 ? (
+          <Typography align="center" sx={{ py: 4 }}>
+            No products found in this category.
+          </Typography>
+        ) : (
+          <Grid container spacing={4}>
+            {products.map((product) => (
+              <Grid item key={product.id} xs={12} sm={6} md={4}>
+                <ProductCard product={product} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </Container>
       <Footer />
     </Box>

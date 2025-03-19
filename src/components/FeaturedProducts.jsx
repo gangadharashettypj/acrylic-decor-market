@@ -1,49 +1,40 @@
 
-import React from 'react';
-import { Container, Typography, Grid, Box } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, Grid, Box, CircularProgress } from '@mui/material';
 import ProductCard from './ProductCard';
-
-// Sample product data (would normally come from an API)
-const products = [
-  {
-    id: 1,
-    name: 'Aurora Table Lamp',
-    category: 'Lighting',
-    price: 129.99,
-    rating: 4.5,
-    reviewCount: 24,
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
-  },
-  {
-    id: 2,
-    name: 'Geometric Wall Art',
-    category: 'Wall Decor',
-    price: 89.99,
-    rating: 4.7,
-    reviewCount: 18,
-    image: 'https://images.unsplash.com/photo-1554295405-abb8fd54f153?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
-  },
-  {
-    id: 3,
-    name: 'Prism Pendant Light',
-    category: 'Lighting',
-    price: 149.99,
-    rating: 4.8,
-    reviewCount: 32,
-    image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
-  },
-  {
-    id: 4,
-    name: 'Minimalist Table Sculpture',
-    category: 'Table Decor',
-    price: 59.99,
-    rating: 4.2,
-    reviewCount: 15,
-    image: 'https://images.unsplash.com/photo-1493244040629-496f6d136e28?ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80',
-  },
-];
+import { getProducts } from '../integrations/supabase/client';
 
 const FeaturedProducts = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // Fetch a limited set of products for the featured section
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('rating', { ascending: false })
+          .limit(4);
+        
+        if (error) {
+          throw error;
+        }
+        
+        setProducts(data || []);
+      } catch (err) {
+        console.error('Error fetching featured products:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <Box sx={{ py: 8, bgcolor: 'background.default' }}>
       <Container maxWidth="lg">
@@ -54,13 +45,27 @@ const FeaturedProducts = () => {
           Discover our most popular lighting and decor pieces
         </Typography>
         
-        <Grid container spacing={4} sx={{ mt: 2 }}>
-          {products.map((product) => (
-            <Grid item key={product.id} xs={12} sm={6} md={3}>
-              <ProductCard product={product} />
-            </Grid>
-          ))}
-        </Grid>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Typography color="error" align="center" sx={{ py: 4 }}>
+            Error loading products: {error}
+          </Typography>
+        ) : products.length === 0 ? (
+          <Typography align="center" sx={{ py: 4 }}>
+            No featured products available.
+          </Typography>
+        ) : (
+          <Grid container spacing={4} sx={{ mt: 2 }}>
+            {products.map((product) => (
+              <Grid item key={product.id} xs={12} sm={6} md={3}>
+                <ProductCard product={product} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </Container>
     </Box>
   );

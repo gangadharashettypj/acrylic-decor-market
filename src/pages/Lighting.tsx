@@ -1,68 +1,36 @@
 
-import React from 'react';
-import { Box, Container, Typography, Grid, Breadcrumbs, Link } from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Container, Typography, Grid, Breadcrumbs, Link, CircularProgress } from '@mui/material';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ProductCard from '../components/ProductCard';
+import { getProducts } from '../integrations/supabase/client';
 
 const Lighting = () => {
-  // Sample product data for lighting category
-  const lightingProducts = [
-    {
-      id: 1,
-      name: 'Modern Acrylic Pendant Light',
-      price: 149.99,
-      image: 'https://images.unsplash.com/photo-1540932239986-30128078f3c5?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Pendant',
-      rating: 4.5,
-      reviewCount: 24
-    },
-    {
-      id: 2,
-      name: 'Geometric LED Table Lamp',
-      price: 89.99,
-      image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Table Lamp',
-      rating: 4.8,
-      reviewCount: 36
-    },
-    {
-      id: 3,
-      name: 'Minimalist Floor Lamp',
-      price: 199.99,
-      image: 'https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Floor Lamp',
-      rating: 4.3,
-      reviewCount: 18
-    },
-    {
-      id: 4,
-      name: 'Artistic Wall Sconce',
-      price: 79.99,
-      image: 'https://images.unsplash.com/photo-1517991104123-1d56a6e81ed9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Wall Light',
-      rating: 4.6,
-      reviewCount: 42
-    },
-    {
-      id: 5,
-      name: 'Acrylic Chandelier',
-      price: 299.99,
-      image: 'https://images.unsplash.com/photo-1565814329452-e1efa11c5b89?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Chandelier',
-      rating: 4.9,
-      reviewCount: 52
-    },
-    {
-      id: 6,
-      name: 'Colorful Night Light',
-      price: 39.99,
-      image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60',
-      category: 'Night Light',
-      rating: 4.2,
-      reviewCount: 28
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data, error } = await getProducts('Lighting');
+        
+        if (error) {
+          throw error;
+        }
+        
+        setProducts(data || []);
+      } catch (err) {
+        console.error('Error fetching lighting products:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   return (
     <Box>
@@ -84,13 +52,27 @@ const Lighting = () => {
           From pendant lights to table lamps, our designs blend contemporary aesthetics with timeless elegance.
         </Typography>
         
-        <Grid container spacing={4}>
-          {lightingProducts.map((product) => (
-            <Grid item key={product.id} xs={12} sm={6} md={4}>
-              <ProductCard product={product} />
-            </Grid>
-          ))}
-        </Grid>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : error ? (
+          <Typography color="error" align="center" sx={{ py: 4 }}>
+            Error loading products: {error}
+          </Typography>
+        ) : products.length === 0 ? (
+          <Typography align="center" sx={{ py: 4 }}>
+            No products found in this category.
+          </Typography>
+        ) : (
+          <Grid container spacing={4}>
+            {products.map((product) => (
+              <Grid item key={product.id} xs={12} sm={6} md={4}>
+                <ProductCard product={product} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </Container>
       <Footer />
     </Box>
